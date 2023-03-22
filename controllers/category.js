@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const ErrorResponse = require("../utils/errorResponse");
-const Product = require("../models/Product");
 const Category = require("../models/Category");
 
 // @desc    Get all categories

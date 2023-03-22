@@ -1,7 +1,7 @@
 const { v2: cloudinary } = require('cloudinary');
 const streamifier = require('streamifier');
 const multer = require('multer');
-const Product = require("../models/Product");
+const Room = require("../models/Room");
 const ErrorResponse = require("../utils/errorResponse");
 
 const upload = multer();
@@ -46,7 +46,6 @@ exports.imageUpload = async (req, res, next) => {
   }
 };
 
-// // Route for deleting an image by public ID
 exports.imageDeletion = async (req, res, next) => {
   const { public_id } = req.body;
 
@@ -59,49 +58,35 @@ exports.imageDeletion = async (req, res, next) => {
 
     cloudinary.config(cloudinaryConfig);
 
-    // Delete the image from Cloudinary
     const result = await cloudinary.uploader.destroy(public_id);
     console.log(`Image ${public_id} deleted from Cloudinary`);
 
-    // Find the product(s) referencing the deleted image
-    const products = await Product.find({
+    const rooms = await Room.find({
       $or: [
         { 'defaultImage.public_id': public_id },
         { 'otherImages.public_id': public_id }
       ]
     });
 
-    // Update the product(s) with the new image URLs
-    await updateProductImages(products, public_id);
+    await updateRoomImages(rooms, public_id);
 
-    // Return success response
     res.status(200).json({ message: 'Image deleted successfully' });
   } catch (error) {
-    // Return error response
     next(error);
   }
 };
 
-async function updateProductImages(products, public_id) {
-  for (const product of products) {
-    if (product.defaultImage.public_id === public_id) {
-      console.log(`Removing deleted image from defaultImage field. Before: `, product.defaultImage);
-
-      product.defaultImage = {
+async function updateRoomImages(rooms, public_id) {
+  for (const room of rooms) {
+    if (room.defaultImage.public_id === public_id) {
+      room.defaultImage = {
         secure_url: "default_secure_url",
         public_id: "default_public_id"
       };
-
-      console.log(`After: `, product.defaultImage);
     }
 
-    console.log(`Before: `, product.otherImages);
+    room.otherImages = room.otherImages.filter(image => image.public_id !== public_id);
 
-    product.otherImages = product.otherImages.filter(image => image.public_id !== public_id);
-
-    console.log(`After: `, product.otherImages);
-
-    await Product.updateOne({ _id: product._id }, { $set: { defaultImage: product.defaultImage, otherImages: product.otherImages } });
-    console.log(`Product ${product._id} updated`);
+    await Room.updateOne({ _id: room._id }, { $set: { defaultImage: room.defaultImage, otherImages: room.otherImages } });
   }
 };

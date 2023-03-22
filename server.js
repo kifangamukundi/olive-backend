@@ -28,10 +28,9 @@ app.get("/", (req, res, next) => {
 // Connecting Routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/mpesa", require("./routes/mpesa"));
-app.use("/api/private", require("./routes/private"));
-app.use("/api/products", require("./routes/product"));
 app.use("/api/uploads", require("./routes/upload"));
 app.use("/api/categories", require("./routes/category"));
+app.use("/api/rooms", require("./routes/room"));
 
 // Error Handler Middleware
 app.use(errorHandler);

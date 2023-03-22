@@ -11,7 +11,7 @@ const categorySchema = new mongoose.Schema({
     required: [true, "Please a slug"],
     unique: true,
   },
-  products: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+  rooms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Room' }],
 });
 
 module.exports = mongoose.model('Category', categorySchema);
