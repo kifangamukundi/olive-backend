@@ -9,7 +9,7 @@ exports.getAllCategoriesRoute = async (req, res, next) => {
     const categories = await Category.find();
 
     if (categories.length === 0) {
-      return next(new ErrorResponse("No Categories found", 404));
+      return next(new ErrorResponse("No Perks found", 404));
     }
     
     res.status(200).json({ sucess: true, message: "Success", data:{categories: categories} });
@@ -45,3 +45,22 @@ exports.createCategoryRoute =async (req, res, next) => {
       next(err);
     }
   };
+
+  exports.deleteCategory = async (req, res, next) => {
+    const { id } = req.params;
+  
+    try {
+      const category = await Category.findById(id);
+  
+      if (!category) {
+        return next(new ErrorResponse("Category not found", 404));
+      }
+  
+      await category.remove();
+  
+      res.status(200).json({ success: true, message: "Category deleted successfully" });
+    } catch (err) {
+      next(err);
+    }
+  };
+  

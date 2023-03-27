@@ -4,11 +4,18 @@ const ErrorResponse = require("../utils/errorResponse");
 const Room = require("../models/Room");
 const Category = require("../models/Category");
 const Booking = require("../models/Booking");
+const RoomType = require ("../models/RoomType");
 
 exports.createRoom =async (req, res, next) => {
-  const { title, summary, slug, categories, content, defaultImage, otherImages, price, capacity} = req.body;
+  const { title, summary, slug, roomType, categories, content, defaultImage, otherImages, price, capacity} = req.body;
 
   try {
+    const roomTypeDoc = await RoomType.findById({ _id: roomType });
+
+    if (!roomTypeDoc) {
+      return next(new ErrorResponse("No type found", 404));
+    }
+
     const room = await Room.create({
       title,
       summary,
@@ -17,9 +24,13 @@ exports.createRoom =async (req, res, next) => {
       defaultImage,
       otherImages,
       categories,
+      roomType: roomTypeDoc._id,
       price,
       capacity
     });
+
+    roomTypeDoc.rooms.push(room._id);
+    await roomTypeDoc.save();
     
     await Promise.all(
       categories.map(categoryId =>
@@ -30,6 +41,7 @@ exports.createRoom =async (req, res, next) => {
         )
       )
     );
+
 
     res.status(201).json({ sucess: true, message: "Success", data:{room: room} });
   } catch (err) {
@@ -77,7 +89,7 @@ exports.getRoomById = async (req, res, next) => {
 
 exports.updateRoom = async (req, res, next) => {
   const id = req.params.id;
-  const { capacity, price, isAvailable, title, summary, categories, slug, content, defaultImage, otherImages } = req.body;
+  const { capacity, roomType, price, isAvailable, title, summary, categories, slug, content, defaultImage, otherImages } = req.body;
 
   try {
     const room = await Room.findById(id);
@@ -85,6 +97,26 @@ exports.updateRoom = async (req, res, next) => {
     if (!room) {
       return next(new ErrorResponse("No room found", 404));
     }
+
+     // Remove the room from the previous room type
+     const prevRoomType = room.roomType;
+     if (prevRoomType) {
+       await RoomType.findByIdAndUpdate(
+         prevRoomType,
+         { $pull: { rooms: id } },
+         { new: true }
+       );
+     }
+ 
+     // Update the room type of the room
+     if (roomType != null) {
+       room.roomType = roomType;
+       await RoomType.findByIdAndUpdate(
+         roomType,
+         { $addToSet: { rooms: id } },
+         { new: true }
+       );
+     }
 
     await Category.updateMany({ _id: { $in: room.categories } }, { $pull: { rooms: id } });
     room.categories = [];
@@ -198,6 +230,47 @@ exports.getAvailableRooms = async (req, res, next) => {
       next(err);
     }
 };
+
+// analytics
+exports.getRoomCount = async (req, res, next) => {
+  try {
+    const count = await Room.countDocuments();
+    res.status(200).json({ success: true, message: "Success", data: { roomCount:count } });
+  } catch (err) {
+    next(new ErrorResponse(err.message, 500));
+  }
+};
+
+exports.getAverageRoomPrice = async (req, res, next) => {
+  try {
+    const averagePrice = await Room.aggregate([
+      { $match: { isAvailable: true } },
+      { $group: { _id: null, averagePrice: { $avg: "$price" } } },
+      { $project: { _id: 0, averagePrice: 1 } }
+    ]);
+    if (averagePrice.length === 0) {
+      return next(new ErrorResponse("No available rooms found", 404));
+    }
+    res.status(200).json({ success: true, message: "Success", data: { averagePrice: averagePrice[0].averagePrice } });
+  } catch (err) {
+    next(new ErrorResponse(err.message, 500));
+  }
+};
+
+exports.getRoomsByCategory = async (req, res, next) => {
+  try {
+    const roomsByCategory = await Room.aggregate([
+      { $lookup: { from: 'categories', localField: 'categories', foreignField: '_id', as: 'category' } },
+      { $unwind: '$category' },
+      { $group: { _id: '$category._id', title: { $first: '$category.title' }, slug: { $first: '$category.slug' }, rooms: { $push: '$$ROOT' } } },
+      { $project: { _id: 0, category: { _id: '$_id', title: '$title', slug: '$slug', rooms: '$rooms' } } },
+    ]);
+    res.status(200).json({ success: true, message: "Success", data: { roomsByCategory: roomsByCategory } });
+  } catch (err) {
+    next(new ErrorResponse(err.message, 500));
+  }
+};
+
   
   
   

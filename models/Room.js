@@ -21,6 +21,7 @@ const roomSchema = new mongoose.Schema({
     required: [true, "Please a content"],
   },
   categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
+  roomType: { type: mongoose.Schema.Types.ObjectId, ref: 'RoomType' },
   defaultImage: {
     secure_url: {
       type: String,
@@ -73,6 +74,19 @@ roomSchema.methods.bookRoom = function (roomId) {
     this.isAvailable = false;
     return this.save();
 };
+
+roomSchema.pre('remove', async function(next) {
+  try {
+    // Remove the reference to the parent RoomType from this Room
+    await this.model('RoomType').updateOne(
+      { _id: this.roomType },
+      { $pull: { rooms: this._id } }
+    );
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
   
 roomSchema.pre('remove', async function(next) {
   const room = this;
