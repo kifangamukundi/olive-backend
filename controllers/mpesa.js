@@ -76,10 +76,11 @@ exports.stkpush = async (req, res, next) => {
   }   
 };
 
+// {"Item":[{"Name":"Amount","Value":1},{"Name":"MpesaReceiptNumber","Value":"RCT6VFKXIE"},{"Name":"TransactionDate","Value":20230329110939},{"Name":"PhoneNumber","Value":254702817040}]}
+
 exports.stkcallback = async (req, res, next) => {
   console.log("callback was called");
-  console.log(req.body.Body.stkCallback.CallbackMetadata)
-  console.log(JSON.stringify(req.body.Body.stkCallback.CallbackMetadata))
+  console.log(req.body)
   // Extract the relevant data from the request body
   const { Body: { stkCallback: { ResultCode, ResultDesc, CallbackMetadata } = {} } = {} } = req.body;
 
@@ -93,7 +94,7 @@ exports.stkcallback = async (req, res, next) => {
       }
       // Extract the data from the CallbackMetadata object
       const { Item: [{ Name: amountName, Value: amountValue }, { Name: receiptName, Value: receiptValue }, { Name: dateName, Value: dateValue }, { Name: phoneName, Value: phoneValue }] } = CallbackMetadata;
-
+      console.log("items", amountValue, receiptValue, dateValue, phoneValue)
       // Find the STK Push transaction in the database using the transaction ID
       const mpesa = await Mpesa.findOne({ transaction_id: req.body.Body.stkCallback.CheckoutRequestID });
 
@@ -105,13 +106,23 @@ exports.stkcallback = async (req, res, next) => {
 
       // Update the status of the STK Push transaction based on the result code
       mpesa.status = 'Completed';
-      mpesa.amount = amountValue;
-      mpesa.receipt_number = receiptValue;
-      mpesa.transaction_date = dateValue;
-      mpesa.phone_number = phoneValue;
-      mpesa.ResultDesc = ResultDesc;
-
       await mpesa.save();
+
+      mpesa.amount = amountValue;
+      await mpesa.save();
+
+      mpesa.receipt_number = receiptValue;
+      await mpesa.save();
+
+      mpesa.transaction_date = dateValue;
+      await mpesa.save();
+
+      mpesa.phone_number = phoneValue;
+      await mpesa.save();
+
+      mpesa.ResultDesc = ResultDesc;
+      await mpesa.save();
+
 
       // Send a response to M-Pesa to confirm receipt of the callback
       return res.status(200).json({ success: true, data: "Callback received" });
