@@ -79,62 +79,88 @@ exports.stkpush = async (req, res, next) => {
 exports.stkcallback = async (req, res, next) => {
   console.log("callback was called");
   console.log(req.body)
-
   // Extract the relevant data from the request body
   const { Body: { stkCallback: { ResultCode, ResultDesc, CallbackMetadata } = {} } = {} } = req.body;
 
   try {
-    if (ResultCode === "0") {
-      // Handle success case
-      if (!CallbackMetadata) {
-        // If CallbackMetadata is missing, log an error and return a 500 response
-        console.error("CallbackMetadata is missing");
-        return res.status(500).json({ success: false, error: "CallbackMetadata is missing" });
+    // Find the STK Push transaction in the database using the transaction ID
+    Mpesa.findOne({ transaction_id: req.body.Body.stkCallback.CheckoutRequestID }, (err, stkPush) => {
+      if (err || !stkPush) {
+          console.error(err);
+          return next(new ErrorResponse("Something went wrong during Processing", 500));
       }
-      console.log({CallbackMetadata: CallbackMetadata})
+
+      // Update the status of the STK Push transaction based on the result code
+      if (ResultCode === "0") {
+        console.log(CallbackMetadata)
       // Extract the data from the CallbackMetadata object
       const { Item: [{ Name: amountName, Value: amountValue }, { Name: receiptName, Value: receiptValue }, { Name: dateName, Value: dateValue }, { Name: phoneName, Value: phoneValue }] } = CallbackMetadata;
-
-      // Find the STK Push transaction in the database using the transaction ID
-      const mpesa = await Mpesa.findOne({ transaction_id: req.body.Body.stkCallback.CheckoutRequestID });
-
-      if (!mpesa) {
-        // If the STK Push transaction is not found, log an error and return a 500 response
-        console.error("STK Push transaction not found");
-        return res.status(500).json({ success: false, error: "STK Push transaction not found" });
+      stkPush.status = 'Completed';
+      stkPush.amount = amountValue;
+      stkPush.receipt_number = receiptValue;
+      stkPush.transaction_date = dateValue;
+      stkPush.phone_number = phoneValue;
+      stkPush.ResultDesc = ResultDesc;
+      } else {
+      stkPush.status = 'Failed';
+      stkPush.ResultDesc = ResultDesc;
       }
-
-      // Update the status of the STK Push transaction based on the result code
-      mpesa.status = 'Completed';
-      mpesa.amount = amountValue;
-      mpesa.receipt_number = receiptValue;
-      mpesa.transaction_date = dateValue;
-      mpesa.phone_number = phoneValue;
-      mpesa.ResultDesc = ResultDesc;
-
-      await mpesa.save();
+      stkPush.save();
 
       // Send a response to M-Pesa to confirm receipt of the callback
-      return res.status(200).json({ success: true, data: "Callback received" });
-    } else {
-      // Handle failure case
-      // Find the STK Push transaction in the database using the transaction ID
-      const mpesa = await Mpesa.findOne({ transaction_id: req.body.Body.stkCallback.CheckoutRequestID });
+      res.status(200).json({ success: true, data: "Callback received" });
+  });
+    // if (ResultCode === "0") {
+    //   // Handle success case
+    //   if (!CallbackMetadata) {
+    //     // If CallbackMetadata is missing, log an error and return a 500 response
+    //     console.error("CallbackMetadata is missing");
+    //     return res.status(500).json({ success: false, error: "CallbackMetadata is missing" });
+    //   }
+    //   console.log({CallbackMetadata: CallbackMetadata})
+      // // Extract the data from the CallbackMetadata object
+      // const { Item: [{ Name: amountName, Value: amountValue }, { Name: receiptName, Value: receiptValue }, { Name: dateName, Value: dateValue }, { Name: phoneName, Value: phoneValue }] } = CallbackMetadata;
 
-      if (!mpesa) {
-        // If the STK Push transaction is not found, log an error and return a 500 response
-        console.error("STK Push transaction not found");
-        return res.status(500).json({ success: false, error: "STK Push transaction not found" });
-      }
+    //   // Find the STK Push transaction in the database using the transaction ID
+    //   const mpesa = await Mpesa.findOne({ transaction_id: req.body.Body.stkCallback.CheckoutRequestID });
 
-      // Update the status of the STK Push transaction based on the result code
-      mpesa.status = 'Failed';
-      mpesa.ResultDesc = ResultDesc;
-      await mpesa.save();
+    //   if (!mpesa) {
+    //     // If the STK Push transaction is not found, log an error and return a 500 response
+    //     console.error("STK Push transaction not found");
+    //     return res.status(500).json({ success: false, error: "STK Push transaction not found" });
+    //   }
 
-      // Send a response to M-Pesa to confirm receipt of the callback
-      return res.status(200).json({ success: true, data: "Callback received" });
-    }
+    //   // Update the status of the STK Push transaction based on the result code
+      // mpesa.status = 'Completed';
+      // mpesa.amount = amountValue;
+      // mpesa.receipt_number = receiptValue;
+      // mpesa.transaction_date = dateValue;
+      // mpesa.phone_number = phoneValue;
+      // mpesa.ResultDesc = ResultDesc;
+
+    //   await mpesa.save();
+
+    //   // Send a response to M-Pesa to confirm receipt of the callback
+    //   return res.status(200).json({ success: true, data: "Callback received" });
+    // } else {
+    //   // Handle failure case
+    //   // Find the STK Push transaction in the database using the transaction ID
+    //   const mpesa = await Mpesa.findOne({ transaction_id: req.body.Body.stkCallback.CheckoutRequestID });
+
+    //   if (!mpesa) {
+    //     // If the STK Push transaction is not found, log an error and return a 500 response
+    //     console.error("STK Push transaction not found");
+    //     return res.status(500).json({ success: false, error: "STK Push transaction not found" });
+    //   }
+
+    //   // Update the status of the STK Push transaction based on the result code
+    //   mpesa.status = 'Failed';
+    //   mpesa.ResultDesc = ResultDesc;
+    //   await mpesa.save();
+
+    //   // Send a response to M-Pesa to confirm receipt of the callback
+    //   return res.status(200).json({ success: true, data: "Callback received" });
+    // }
   } catch (err) {
     next(err);
   }
