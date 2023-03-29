@@ -104,28 +104,22 @@ exports.stkcallback = async (req, res, next) => {
         return res.status(500).json({ success: false, error: "STK Push transaction not found" });
       }
 
-      // Update the status of the STK Push transaction based on the result code
-      mpesa.status = 'Completed';
-      await mpesa.save();
-
-      mpesa.amount = amountValue;
-      await mpesa.save();
-
-      mpesa.receipt_number = receiptValue;
-      await mpesa.save();
-
-      mpesa.transaction_date = dateValue;
-      await mpesa.save();
-
-      mpesa.phone_number = phoneValue;
-      await mpesa.save();
-
-      mpesa.ResultDesc = ResultDesc;
-      await mpesa.save();
-
-
-      // Send a response to M-Pesa to confirm receipt of the callback
-      return res.status(200).json({ success: true, data: "Callback received" });
+      try {
+        // Update the status of the STK Push transaction based on the result code
+        mpesa.status = 'Completed';
+        mpesa.amount = amountValue;
+        mpesa.receipt_number = receiptValue;
+        mpesa.transaction_date = dateValue;
+        mpesa.phone_number = phoneValue;
+        mpesa.ResultDesc = ResultDesc;
+      
+        await mpesa.save();
+      
+        // Send a response to M-Pesa to confirm receipt of the callback
+        return res.status(200).json({ success: true, data: "Callback received" });
+      } catch (err) {
+        return next(new ErrorResponse("Transaction could not be updated", 500));
+      }
     } else {
       // Handle failure case
       // Find the STK Push transaction in the database using the transaction ID

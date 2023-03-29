@@ -18,21 +18,23 @@ const MpesaSchema = new mongoose.Schema({
   },
   receipt_number: {
     type: String,
+    default: '',
   },
   transaction_date: {
     type: Date,
+    default: Date.now,
   },
   phone_number: {
     type: String,
+    default: '',
   },
   ResultDesc: {
     type: String,
+    default: '',
   },
-  
-//   Other dynamic fields
 },
 {
-    timestamps: true
+  timestamps: true
 });
 
 // Methods here
