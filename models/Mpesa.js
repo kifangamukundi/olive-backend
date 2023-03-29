@@ -17,6 +17,15 @@ const MpesaSchema = new mongoose.Schema({
     type: String,
     default: 'Pending',
   },
+  receipt_number: {
+    type: String,
+  },
+  transaction_date: {
+    type: Date,
+  },
+  phone_number: {
+    type: String,
+  },
   
 //   Other dynamic fields
 },
