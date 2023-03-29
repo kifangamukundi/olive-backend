@@ -57,8 +57,7 @@ exports.stkpush = async (req, res, next) => {
         PartyA: `254${phone.substring(1)}`, // replace with test phone number
         PartyB: businessShortCode,
         PhoneNumber: `254${phone.substring(1)}`, // replace with test phone number
-        // CallBackURL: `${callbackurl}`,
-        CallBackURL: "https://96c7-105-161-195-62.eu.ngrok.io/api/mpesa/stkpush/callback",
+        CallBackURL: `${callbackurl}`,
         AccountReference: `254${phone.substring(1)}`,
         TransactionDesc: "Test",
       },
