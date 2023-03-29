@@ -115,7 +115,7 @@ exports.stkcallback = async (req, res, next) => {
       await mpesa.save();
 
       // Send a response to M-Pesa to confirm receipt of the callback
-      res.status(200).json({ success: true, data: "Callback received" });
+      return res.status(200).json({ success: true, data: "Callback received" });
     } else {
       // Handle failure case
       // Find the STK Push transaction in the database using the transaction ID
@@ -133,7 +133,7 @@ exports.stkcallback = async (req, res, next) => {
       await mpesa.save();
 
       // Send a response to M-Pesa to confirm receipt of the callback
-      res.status(200).json({ success: true, data: "Callback received" });
+      return res.status(200).json({ success: true, data: "Callback received" });
     }
   } catch (err) {
     next(err);
