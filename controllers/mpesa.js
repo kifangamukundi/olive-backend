@@ -111,6 +111,8 @@ exports.stkcallback = async (req, res, next) => {
       mpesa.receipt_number = receiptValue;
       mpesa.transaction_date = dateValue;
       mpesa.phone_number = phoneValue;
+      mpesa.ResultDesc = ResultDesc;
+
       await mpesa.save();
 
       // Send a response to M-Pesa to confirm receipt of the callback
@@ -128,6 +130,7 @@ exports.stkcallback = async (req, res, next) => {
 
       // Update the status of the STK Push transaction based on the result code
       mpesa.status = 'Failed';
+      mpesa.ResultDesc = ResultDesc;
       await mpesa.save();
 
       // Send a response to M-Pesa to confirm receipt of the callback

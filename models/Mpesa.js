@@ -25,6 +25,9 @@ const MpesaSchema = new mongoose.Schema({
   phone_number: {
     type: String,
   },
+  ResultDesc: {
+    type: String,
+  },
   
 //   Other dynamic fields
 },
