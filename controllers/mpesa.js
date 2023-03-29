@@ -83,7 +83,8 @@ exports.stkpush = async (req, res, next) => {
 
 // @desc    Receive the result of the transaction via callback url
 exports.stkcallback = async (req, res, next) => {
-  console.log("callback was called")
+  console.log("yay the callback was called by safaricom")
+  console.log(req.body)
   const { Body: { stkCallback: { ResultCode, ResultDesc, CallbackMetadata } } } = req.body;
   const { Item: [{ Name, Value }] } = CallbackMetadata;
 
@@ -150,7 +151,6 @@ exports.stkpushquery = async (req, res, next) => {
         },
       }
     );
-    console.log(result)
     res.status(200).json({ sucess: true, message: "Query received", data:{mpesa: result.data} });
   } catch (err) {
     next(err)
