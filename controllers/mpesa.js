@@ -80,8 +80,8 @@ exports.stkcallback = async (req, res, next) => {
   console.log("callback was called");
   console.log(req.body)
   // Extract the relevant data from the request body
-  const { Body: { stkCallback: { ResultCode, ResultDesc, CallbackMetadata } = {} } = {} } = req.body;
-
+  // const { Body: { stkCallback: { ResultCode, ResultDesc, CallbackMetadata } = {} } = {} } = req.body;
+  const { Body: { stkCallback: { ResultCode, ResultDesc, CallbackMetadata } } } = req.body;
   try {
     if (ResultCode === "0") {
       const { Item: [{ Name: amountName, Value: amountValue }, { Name: receiptName, Value: receiptValue }, { Name: dateName, Value: dateValue }, { Name: phoneName, Value: phoneValue }] } = CallbackMetadata;
