@@ -76,8 +76,6 @@ exports.stkpush = async (req, res, next) => {
   }   
 };
 
-// {"Item":[{"Name":"Amount","Value":1},{"Name":"MpesaReceiptNumber","Value":"RCT6VFKXIE"},{"Name":"TransactionDate","Value":20230329110939},{"Name":"PhoneNumber","Value":254702817040}]}
-
 exports.stkcallback = async (req, res, next) => {
   console.log("callback was called");
   console.log(req.body)
@@ -92,17 +90,9 @@ exports.stkcallback = async (req, res, next) => {
         console.error("CallbackMetadata is missing");
         return res.status(500).json({ success: false, error: "CallbackMetadata is missing" });
       }
+      console.log({CallbackMetadata: CallbackMetadata})
       // Extract the data from the CallbackMetadata object
-      // const { Item: [{ Name: amountName, Value: amountValue }, { Name: receiptName, Value: receiptValue }, { Name: dateName, Value: dateValue }, { Name: phoneName, Value: phoneValue }] } = CallbackMetadata;
-      const amountName = CallbackMetadata.Item[0].Name;
-      const amountValue = CallbackMetadata.Item[0].Value;
-      const receiptName = CallbackMetadata.Item[1].Name;
-      const receiptValue = CallbackMetadata.Item[1].Value;
-      const dateName = CallbackMetadata.Item[2].Name;
-      const dateValue = CallbackMetadata.Item[2].Value;
-      const phoneName = CallbackMetadata.Item[3].Name;
-      const phoneValue = CallbackMetadata.Item[3].Value;
-      console.log("items", amountValue, receiptValue, dateValue, phoneValue)
+      const { Item: [{ Name: amountName, Value: amountValue }, { Name: receiptName, Value: receiptValue }, { Name: dateName, Value: dateValue }, { Name: phoneName, Value: phoneValue }] } = CallbackMetadata;
 
       // Find the STK Push transaction in the database using the transaction ID
       const mpesa = await Mpesa.findOne({ transaction_id: req.body.Body.stkCallback.CheckoutRequestID });
@@ -113,22 +103,31 @@ exports.stkcallback = async (req, res, next) => {
         return res.status(500).json({ success: false, error: "STK Push transaction not found" });
       }
 
-      try {
-        // Update the status of the STK Push transaction based on the result code
-        mpesa.status = 'Completed';
-        mpesa.amount = amountValue;
-        mpesa.receipt_number = receiptValue;
-        mpesa.transaction_date = dateValue;
-        mpesa.phone_number = phoneValue;
-        mpesa.ResultDesc = ResultDesc;
-      
-        await mpesa.save();
-      
-        // Send a response to M-Pesa to confirm receipt of the callback
-        return res.status(200).json({ success: true, data: "Callback received" });
-      } catch (err) {
-        return next(new ErrorResponse("Transaction could not be updated", 500));
-      }
+      // Update the status of the STK Push transaction based on the result code
+      // mpesa.status = 'Completed';
+      // mpesa.amount = amountValue;
+      // mpesa.receipt_number = receiptValue;
+      // mpesa.transaction_date = dateValue;
+      // mpesa.phone_number = phoneValue;
+      // mpesa.ResultDesc = ResultDesc;
+
+      // await mpesa.save();
+      await Mpesa.updateOne(
+        { transaction_id: req.body.Body.stkCallback.CheckoutRequestID },
+        {
+          $set: {
+            status: ResultCode === "0" ? "Completed" : "Failed",
+            amount: CallbackMetadata?.Item?.find(item => item.Name === "Amount")?.Value || null,
+            receipt_number: CallbackMetadata?.Item?.find(item => item.Name === "MpesaReceiptNumber")?.Value || null,
+            transaction_date: CallbackMetadata?.Item?.find(item => item.Name === "TransactionDate")?.Value || null,
+            phone_number: CallbackMetadata?.Item?.find(item => item.Name === "PhoneNumber")?.Value || null,
+            ResultDesc
+          }
+        }
+      );
+
+      // Send a response to M-Pesa to confirm receipt of the callback
+      return res.status(200).json({ success: true, data: "Callback received" });
     } else {
       // Handle failure case
       // Find the STK Push transaction in the database using the transaction ID
