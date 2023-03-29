@@ -84,7 +84,7 @@ exports.stkcallback = async (req, res, next) => {
   const { Body: { stkCallback: { ResultCode, ResultDesc, CallbackMetadata } = {} } = {} } = req.body;
 
   try {
-    if (ResultCode === 0) {
+    if (ResultCode === "0") {
       // Handle success case
       if (!CallbackMetadata) {
         // If CallbackMetadata is missing, log an error and return a 500 response
