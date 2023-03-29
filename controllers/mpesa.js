@@ -73,6 +73,8 @@ exports.stkpush = async (req, res, next) => {
     }
 
     stkPush.status = 'Initiated';
+    // changed the transaction id
+    stkPush.transaction_id = result.data.CheckoutRequestID;
     stkPush.save();
     
     res.status(200).json({ sucess: true, message: "STK Push request successful", data:{mpesa: result.data} });
