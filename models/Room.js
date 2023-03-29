@@ -56,6 +56,8 @@ const roomSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+},{
+  timestamps: true
 });
 
 roomSchema.statics.findByCapacity = function (capacity) {
@@ -66,8 +68,8 @@ roomSchema.statics.findByPriceRange = function (minPrice, maxPrice) {
     return this.find({ price: { $gte: minPrice, $lte: maxPrice } });
 };
 
-roomSchema.statics.getAvailableRooms = function () {
-    return this.find({ isAvailable: true });
+roomSchema.statics.onlyAvailableRooms = function () {
+  return this.find({ isAvailable: true });
 };
 
 roomSchema.methods.bookRoom = function (roomId) {

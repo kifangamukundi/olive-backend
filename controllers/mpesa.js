@@ -57,7 +57,8 @@ exports.stkpush = async (req, res, next) => {
         PartyA: `254${phone.substring(1)}`, // replace with test phone number
         PartyB: businessShortCode,
         PhoneNumber: `254${phone.substring(1)}`, // replace with test phone number
-        CallBackURL: `${callbackurl}`,
+        // CallBackURL: `${callbackurl}`,
+        CallBackURL: "https://96c7-105-161-195-62.eu.ngrok.io/api/mpesa/stkpush/callback",
         AccountReference: `254${phone.substring(1)}`,
         TransactionDesc: "Test",
       },
@@ -75,12 +76,7 @@ exports.stkpush = async (req, res, next) => {
     stkPush.status = 'Initiated';
     stkPush.save();
     
-    console.log(result.data);
-
-    res.status(200).json({
-      success: true,
-      data: "STK Push request initiated",
-    });
+    res.status(200).json({ sucess: true, message: "STK Push request successful", data:{mpesa: result.data} });
   } catch (err) {
     next(err);
   }   
@@ -88,7 +84,7 @@ exports.stkpush = async (req, res, next) => {
 
 // @desc    Receive the result of the transaction via callback url
 exports.stkcallback = async (req, res, next) => {
-
+  console.log("callback was called")
   const { Body: { stkCallback: { ResultCode, ResultDesc, CallbackMetadata } } } = req.body;
   const { Item: [{ Name, Value }] } = CallbackMetadata;
 
@@ -113,5 +109,51 @@ exports.stkcallback = async (req, res, next) => {
     });
   } catch (err) {
     next(err);
+  }
+};
+
+// checking for processing results
+exports.stkpushquery = async (req, res, next) => {
+  const {CheckoutRequestID} = req.body;
+
+  // Generating a timestamp
+  const date = new Date();
+  const timestamp =
+    date.getFullYear() +
+    ("0" + (date.getMonth() + 1)).slice(-2) +
+    ("0" + date.getDate()).slice(-2) +
+    ("0" + date.getHours()).slice(-2) +
+    ("0" + date.getMinutes()).slice(-2) +
+    ("0" + date.getSeconds()).slice(-2);
+
+  const businessShortCode = process.env.MPESA_BUSINESS_SHORTCODE;
+  const passkey = process.env.MPESA_PASSKEY;
+
+  const querypoint = process.env.MPESA_QUERY_ENDPOINT;
+
+  const password = new Buffer.from(businessShortCode + passkey + timestamp).toString(
+    "base64"
+  );
+  
+  const token = req.token;
+  try {
+    const result = await axios.post(
+      querypoint,
+      {
+        BusinessShortCode: businessShortCode,
+        Password: password,
+        Timestamp: timestamp,
+        CheckoutRequestID: CheckoutRequestID,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    console.log(result)
+    res.status(200).json({ sucess: true, message: "Query received", data:{mpesa: result.data} });
+  } catch (err) {
+    next(err)
   }
 };

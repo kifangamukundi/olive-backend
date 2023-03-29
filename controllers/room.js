@@ -75,7 +75,7 @@ exports.getRoomById = async (req, res, next) => {
   }
 
   try {
-    const room = await Room.findById({_id:id});
+    const room = await Room.findById({_id:id}).populate('categories').populate('roomType').exec();
 
     if (room == null) {
       return next(new ErrorResponse("No room found", 404));
@@ -216,19 +216,13 @@ exports.deleteRoom = async (req, res, next) => {
 };
 
 exports.getAvailableRooms = async (req, res, next) => {
-    const { checkin, checkout } = req.query;
-  
-    try {
-      const rooms = await Room.find({
-        _id: {
-          $nin: await Booking.getRoomsBookedBetweenDates(checkin, checkout),
-        },
-      });
-  
-      res.status(200).json({ success: true, message: "Available rooms found", data: { rooms: rooms } });
-    } catch (err) {
-      next(err);
-    }
+  try {
+    const rooms = await Room.onlyAvailableRooms().populate('categories').populate('roomType').exec();
+
+    res.status(200).json({ success: true, message: "Available rooms found", data: { rooms: rooms } });
+  } catch (err) {
+    next(err);
+  }
 };
 
 // analytics

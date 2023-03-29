@@ -15,10 +15,10 @@ const { onlyAdmin } = require("../middleware/auth");
 router.route("/room-count").get(onlyAdmin, getRoomCount);
 router.route("/average-room-price").get(onlyAdmin, getAverageRoomPrice);
 router.route("/rooms-by-category").get(onlyAdmin, getRoomsByCategory);
+router.route("/available-rooms").get(getAvailableRooms);
 
 router.route("/").get(onlyAdmin, getAllRooms);
 router.route("/:id").get(getRoomById);
-router.route("/available").get(getAvailableRooms);
 router.route("/").post(onlyAdmin, createRoom);
 router.route("/:id").patch(onlyAdmin, updateRoom);
 router.route("/:id").delete(onlyAdmin, deleteRoom);
