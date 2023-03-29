@@ -2,6 +2,9 @@
   "name": "hotel_management",
   "version": "1.0.0",
   "description": "",
+  "engines": {
+    "node": "18.14.2"
+  },
   "main": "server.js",
   "scripts": {
     "server": "nodemon server"
