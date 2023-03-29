@@ -11,14 +11,10 @@ exports.stkpush = async (req, res, next) => {
     return next(new ErrorResponse("Please provide an phone number and amount", 400));
   }
 
-  // Generate a transaction ID
-  const transaction_id = `MPESA${Date.now()}`;
-
   // Save the STK Push request to the database
   const stkPush = new Mpesa({
     phone,
     amount,
-    transaction_id
   });
 
   await stkPush.save();

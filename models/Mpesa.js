@@ -11,7 +11,6 @@ const MpesaSchema = new mongoose.Schema({
   },
   transaction_id: {
     type: String,
-    required: [true, "Please provide transaction Id"],
   },
   status: {
     type: String,
