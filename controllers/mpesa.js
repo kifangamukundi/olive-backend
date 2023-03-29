@@ -93,8 +93,17 @@ exports.stkcallback = async (req, res, next) => {
         return res.status(500).json({ success: false, error: "CallbackMetadata is missing" });
       }
       // Extract the data from the CallbackMetadata object
-      const { Item: [{ Name: amountName, Value: amountValue }, { Name: receiptName, Value: receiptValue }, { Name: dateName, Value: dateValue }, { Name: phoneName, Value: phoneValue }] } = CallbackMetadata;
+      // const { Item: [{ Name: amountName, Value: amountValue }, { Name: receiptName, Value: receiptValue }, { Name: dateName, Value: dateValue }, { Name: phoneName, Value: phoneValue }] } = CallbackMetadata;
+      const amountName = CallbackMetadata.Item[0].Name;
+      const amountValue = CallbackMetadata.Item[0].Value;
+      const receiptName = CallbackMetadata.Item[1].Name;
+      const receiptValue = CallbackMetadata.Item[1].Value;
+      const dateName = CallbackMetadata.Item[2].Name;
+      const dateValue = CallbackMetadata.Item[2].Value;
+      const phoneName = CallbackMetadata.Item[3].Name;
+      const phoneValue = CallbackMetadata.Item[3].Value;
       console.log("items", amountValue, receiptValue, dateValue, phoneValue)
+
       // Find the STK Push transaction in the database using the transaction ID
       const mpesa = await Mpesa.findOne({ transaction_id: req.body.Body.stkCallback.CheckoutRequestID });
 
