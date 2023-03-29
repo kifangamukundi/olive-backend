@@ -78,6 +78,7 @@ exports.stkpush = async (req, res, next) => {
 
 exports.stkcallback = async (req, res, next) => {
   console.log("callback was called");
+  console.log(req.body)
 
   // Extract the relevant data from the request body
   const { Body: { stkCallback: { ResultCode, ResultDesc, CallbackMetadata } = {} } = {} } = req.body;
