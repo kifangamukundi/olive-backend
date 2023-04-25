@@ -33,6 +33,8 @@ app.use("/api/categories", require("./routes/category"));
 app.use("/api/room-types", require("./routes/roomType"));
 app.use("/api/rooms", require("./routes/room"));
 
+app.use("/api/predictions", require("./routes/predict"));
+
 // Error Handler Middleware
 app.use(errorHandler);
 
